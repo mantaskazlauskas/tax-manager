@@ -1,0 +1,6 @@
+@TaxManager.Api_HostAddress = http://localhost:5108
+
+GET {{TaxManager.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

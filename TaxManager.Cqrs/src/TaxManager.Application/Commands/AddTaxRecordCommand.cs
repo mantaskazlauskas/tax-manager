@@ -1,0 +1,12 @@
+using MediatR;
+using TaxManager.Application.Dtos;
+using TaxManager.Domain.Enums;
+
+namespace TaxManager.Application.Commands;
+
+public record AddTaxRecordCommand(
+    string MunicipalityName,
+    TaxPeriodType PeriodType,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    decimal Rate) : IRequest<TaxRecordResponse>;

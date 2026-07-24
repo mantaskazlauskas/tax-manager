@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TaxManager.Api/TaxManager.Api.csproj" />
+    <Project Path="src/TaxManager.Application/TaxManager.Application.csproj" />
+    <Project Path="src/TaxManager.Domain/TaxManager.Domain.csproj" />
+    <Project Path="src/TaxManager.Infrastructure/TaxManager.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TaxManager.Api.IntegrationTests/TaxManager.Api.IntegrationTests.csproj" />
+    <Project Path="tests/TaxManager.Domain.UnitTests/TaxManager.Domain.UnitTests.csproj" />
+  </Folder>
+</Solution>
