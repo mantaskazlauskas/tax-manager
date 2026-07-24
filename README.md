@@ -25,8 +25,7 @@ run instructions.
 ## The core rule
 
 A tax record covers an inclusive date range and has a period type (Yearly/Monthly/Weekly/Daily).
-When several records cover the same date, the **most specific period wins**. Both solutions
-reproduce the exact example from `requirements.md`:
+When several records cover the same date, the **most specific period wins**.
 
 | Municipality | Date | Result |
 |---|---|---|
