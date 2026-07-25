@@ -2,7 +2,7 @@ namespace TaxManager.Domain.Entities;
 
 public class Municipality
 {
-    public Guid Id { get; private set; }
+    public int Id { get; private set; }
     public string Name { get; private set; } = null!;
 
     private readonly List<TaxRecord> _taxRecords = [];
@@ -17,7 +17,6 @@ public class Municipality
             throw new ArgumentException("Municipality name is required.", nameof(name));
         }
 
-        Id = Guid.NewGuid();
         Name = name.Trim();
     }
 

@@ -6,7 +6,7 @@ namespace TaxManager.Domain.UnitTests.Services;
 
 public class TaxRateResolverTests
 {
-    private static readonly Guid MunicipalityId = Guid.NewGuid();
+    private const int MunicipalityId = 1;
 
     // Reproduces the Copenhagen example from requirements.md:
     //  - Yearly 0.2   for 2024-01-01..2024-12-31

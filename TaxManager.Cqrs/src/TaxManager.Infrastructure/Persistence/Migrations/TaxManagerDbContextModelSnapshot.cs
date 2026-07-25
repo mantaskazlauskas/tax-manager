@@ -24,9 +24,11 @@ namespace TaxManager.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TaxManager.Domain.Entities.Municipality", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -50,8 +52,8 @@ namespace TaxManager.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<Guid>("MunicipalityId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("MunicipalityId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PeriodType")
                         .IsRequired()

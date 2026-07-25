@@ -11,7 +11,7 @@ namespace TaxManager.Domain.Entities;
 public class TaxRecord
 {
     public Guid Id { get; private set; }
-    public Guid MunicipalityId { get; private set; }
+    public int MunicipalityId { get; private set; }
     public TaxPeriodType PeriodType { get; private set; }
     public DateOnly StartDate { get; private set; }
     public DateOnly EndDate { get; private set; }
@@ -19,7 +19,7 @@ public class TaxRecord
 
     private TaxRecord() { }
 
-    public TaxRecord(Guid municipalityId, TaxPeriodType periodType, DateOnly startDate, DateOnly endDate, decimal rate)
+    public TaxRecord(int municipalityId, TaxPeriodType periodType, DateOnly startDate, DateOnly endDate, decimal rate)
     {
         Id = Guid.NewGuid();
         MunicipalityId = municipalityId;

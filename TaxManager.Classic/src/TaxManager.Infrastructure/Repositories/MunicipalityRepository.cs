@@ -10,7 +10,7 @@ public class MunicipalityRepository(TaxManagerDbContext dbContext) : IMunicipali
     public Task<Municipality?> GetByNameAsync(string name, CancellationToken cancellationToken) =>
         dbContext.Municipalities.FirstOrDefaultAsync(m => m.Name.ToLower() == name.ToLower(), cancellationToken);
 
-    public Task<Municipality?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<Municipality?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
         dbContext.Municipalities.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
     public async Task AddAsync(Municipality municipality, CancellationToken cancellationToken) =>
