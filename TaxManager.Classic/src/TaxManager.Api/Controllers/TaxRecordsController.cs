@@ -19,11 +19,11 @@ public class TaxRecordsController(ITaxService taxService) : ControllerBase
     }
 
     /// <summary>Updates an existing tax record's period and rate. (Bonus requirement.)</summary>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(TaxRecordResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TaxRecordResponse>> Update(Guid id, UpdateTaxRecordRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaxRecordResponse>> Update(int id, UpdateTaxRecordRequest request, CancellationToken cancellationToken)
     {
         var response = await taxService.UpdateTaxRecordAsync(id, request, cancellationToken);
         return Ok(response);

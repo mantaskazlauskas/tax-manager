@@ -22,7 +22,7 @@ public class TaxRecordsApiTests(TaxManagerApiFactory factory)
         var created = await response.Content.ReadFromJsonAsync<TaxRecordResponse>(JsonDefaults.Options);
         Assert.NotNull(created);
         Assert.Equal(0.25m, created.Rate);
-        Assert.NotEqual(Guid.Empty, created.Id);
+        Assert.NotEqual(0, created.Id);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class TaxRecordsApiTests(TaxManagerApiFactory factory)
         var first = new CreateTaxRecordRequest(municipality, TaxPeriodType.Monthly, new DateOnly(2024, 5, 1), new DateOnly(2024, 5, 31), 0.4m);
         (await client.PostAsJsonAsync("/api/tax-records", first, JsonDefaults.Options)).EnsureSuccessStatusCode();
 
-        var overlapping = new CreateTaxRecordRequest(municipality, TaxPeriodType.Monthly, new DateOnly(2024, 5, 15), new DateOnly(2024, 6, 15), 0.5m);
+        var overlapping = new CreateTaxRecordRequest(municipality, TaxPeriodType.Monthly, new DateOnly(2024, 5, 15), new DateOnly(2024, 6, 14), 0.5m);
         var response = await client.PostAsJsonAsync("/api/tax-records", overlapping, JsonDefaults.Options);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -89,7 +89,7 @@ public class TaxRecordsApiTests(TaxManagerApiFactory factory)
         var client = factory.CreateClient();
         var update = new UpdateTaxRecordRequest(TaxPeriodType.Yearly, new DateOnly(2024, 1, 1), new DateOnly(2024, 12, 31), 0.35m);
 
-        var response = await client.PutAsJsonAsync($"/api/tax-records/{Guid.NewGuid()}", update, JsonDefaults.Options);
+        var response = await client.PutAsJsonAsync($"/api/tax-records/{int.MaxValue}", update, JsonDefaults.Options);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

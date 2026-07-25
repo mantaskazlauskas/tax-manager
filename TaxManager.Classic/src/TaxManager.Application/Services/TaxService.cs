@@ -29,13 +29,16 @@ public class TaxService(
         EnsureNoOverlap(existingRecords, request.PeriodType, request.StartDate, request.EndDate, excludeId: null, municipality.Name);
 
         var taxRecord = new TaxRecord(municipality.Id, request.PeriodType, request.StartDate, request.EndDate, request.Rate);
+
+        municipality.AddTaxRecord(taxRecord);
+        
         await taxRecordRepository.AddAsync(taxRecord, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
 
-    public async Task<TaxRecordResponse> UpdateTaxRecordAsync(Guid taxRecordId, UpdateTaxRecordRequest request, CancellationToken cancellationToken)
+    public async Task<TaxRecordResponse> UpdateTaxRecordAsync(int taxRecordId, UpdateTaxRecordRequest request, CancellationToken cancellationToken)
     {
         var taxRecord = await taxRecordRepository.GetByIdAsync(taxRecordId, cancellationToken)
             ?? throw new TaxRecordNotFoundException(taxRecordId);
@@ -74,7 +77,7 @@ public class TaxService(
         Domain.Enums.TaxPeriodType periodType,
         DateOnly startDate,
         DateOnly endDate,
-        Guid? excludeId,
+        int? excludeId,
         string municipalityName)
     {
         var hasOverlap = existingRecords.Any(record =>

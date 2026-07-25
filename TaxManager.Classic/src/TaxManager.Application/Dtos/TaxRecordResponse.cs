@@ -3,7 +3,7 @@ using TaxManager.Domain.Enums;
 namespace TaxManager.Application.Dtos;
 
 public record TaxRecordResponse(
-    Guid Id,
+    int Id,
     string MunicipalityName,
     TaxPeriodType PeriodType,
     DateOnly StartDate,

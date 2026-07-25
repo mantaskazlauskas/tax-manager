@@ -12,7 +12,7 @@ using TaxManager.Infrastructure.Persistence;
 namespace TaxManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TaxManagerDbContext))]
-    [Migration("20260725183724_InitialCreate")]
+    [Migration("20260725204837_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -48,9 +48,11 @@ namespace TaxManager.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TaxManager.Domain.Entities.TaxRecord", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");

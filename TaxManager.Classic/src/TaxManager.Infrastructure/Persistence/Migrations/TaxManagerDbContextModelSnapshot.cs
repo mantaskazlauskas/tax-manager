@@ -45,9 +45,11 @@ namespace TaxManager.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TaxManager.Domain.Entities.TaxRecord", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
