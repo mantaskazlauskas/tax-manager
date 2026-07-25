@@ -18,6 +18,8 @@ public class TaxService(
             throw new ValidationException("Municipality name is required.");
         }
 
+        TaxRecord.EnsureValidRange(request.PeriodType, request.StartDate, request.EndDate);
+
         var municipality = await municipalityRepository.GetByNameAsync(request.MunicipalityName, cancellationToken);
         if (municipality is null)
         {
@@ -40,6 +42,8 @@ public class TaxService(
 
     public async Task<TaxRecordResponse> UpdateTaxRecordAsync(int taxRecordId, UpdateTaxRecordRequest request, CancellationToken cancellationToken)
     {
+        TaxRecord.EnsureValidRange(request.PeriodType, request.StartDate, request.EndDate);
+
         var taxRecord = await taxRecordRepository.GetByIdAsync(taxRecordId, cancellationToken)
             ?? throw new TaxRecordNotFoundException(taxRecordId);
 

@@ -43,7 +43,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     {
         MunicipalityNotFoundException or TaxRateNotFoundException or TaxRecordNotFoundException
             => (StatusCodes.Status404NotFound, "Not Found"),
-        OverlappingTaxPeriodException or ValidationException or ArgumentException
+        OverlappingTaxPeriodException or InvalidTaxPeriodRangeException or ValidationException or ArgumentException
             => (StatusCodes.Status400BadRequest, "Bad Request"),
         _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
     };
