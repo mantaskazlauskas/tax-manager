@@ -70,6 +70,7 @@ docker compose up --build
 ```
 
 Starts Postgres + the API (port **5080**), applying EF Core migrations automatically on startup.
+Swagger UI: http://localhost:5080/swagger
 
 ```sh
 curl -X POST http://localhost:5080/api/tax-records \
