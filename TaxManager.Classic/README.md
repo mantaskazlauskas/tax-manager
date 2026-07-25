@@ -34,6 +34,10 @@ See `TaxManager.Domain/Services/TaxRateResolver.cs` and its unit tests.
 
 ## Documented assumptions
 
+- A record's date range length must match its period type: Daily = 1 day, Weekly = 7 days,
+  Monthly/Yearly = one calendar month/year from the start date. Enforced by
+  `TaxRecord.EnsureValidRange` - checked up front in `TaxService` before any database call, and
+  again in the entity itself so the invariant holds regardless of caller.
 - Overlapping ranges of the *same* period type for the *same* municipality are rejected at
   creation/update (400) - there'd be no defined tie-breaker. Overlaps *across* different period
   types are expected; that's what the resolver's priority order is for.
