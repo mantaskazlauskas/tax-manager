@@ -5,7 +5,7 @@ using TaxManager.Domain.Enums;
 namespace TaxManager.Application.Commands;
 
 public record UpdateTaxRecordCommand(
-    Guid TaxRecordId,
+    int TaxRecordId,
     TaxPeriodType PeriodType,
     DateOnly StartDate,
     DateOnly EndDate,

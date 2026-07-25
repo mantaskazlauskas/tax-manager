@@ -16,7 +16,7 @@ public static class OverlapGuard
         TaxPeriodType periodType,
         DateOnly startDate,
         DateOnly endDate,
-        Guid? excludeId,
+        int? excludeId,
         string municipalityName)
     {
         var hasOverlap = existingRecords.Any(record =>

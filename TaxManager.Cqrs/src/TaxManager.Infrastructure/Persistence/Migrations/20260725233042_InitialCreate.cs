@@ -29,7 +29,8 @@ namespace TaxManager.Infrastructure.Persistence.Migrations
                 name: "TaxRecords",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     MunicipalityId = table.Column<int>(type: "integer", nullable: false),
                     PeriodType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     StartDate = table.Column<DateOnly>(type: "date", nullable: false),

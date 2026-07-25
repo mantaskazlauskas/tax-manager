@@ -9,8 +9,6 @@ using TaxManager.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
-    // Accept/emit enum values as their names (e.g. "Yearly") rather than raw numbers - much more
-    // usable for anyone poking at the API by hand via curl/Swagger.
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddEndpointsApiExplorer();

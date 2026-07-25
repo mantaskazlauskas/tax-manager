@@ -61,10 +61,17 @@ public class TaxRateResolverTests
     public void Resolve_PrefersMoreSpecificPeriod_OverYearly(TaxPeriodType morePrecisePeriod)
     {
         var date = new DateOnly(2024, 6, 15);
+        var end = morePrecisePeriod switch
+        {
+            TaxPeriodType.Daily => date,
+            TaxPeriodType.Weekly => date.AddDays(6),
+            TaxPeriodType.Monthly => date.AddMonths(1).AddDays(-1),
+            _ => throw new ArgumentOutOfRangeException(nameof(morePrecisePeriod))
+        };
         var records = new List<TaxRecord>
         {
             new(MunicipalityId, TaxPeriodType.Yearly, new DateOnly(2024, 1, 1), new DateOnly(2024, 12, 31), 0.2m),
-            new(MunicipalityId, morePrecisePeriod, date, date, 0.9m)
+            new(MunicipalityId, morePrecisePeriod, date, end, 0.9m)
         };
 
         var result = TaxRateResolver.Resolve(records, date);

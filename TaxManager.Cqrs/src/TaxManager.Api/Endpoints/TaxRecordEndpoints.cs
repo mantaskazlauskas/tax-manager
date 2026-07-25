@@ -20,7 +20,7 @@ public static class TaxRecordEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
         // Updates an existing tax record's period and rate. (Bonus requirement.)
-        group.MapPut("/{id:guid}", async (Guid id, UpdateTaxRecordRequest request, ISender sender, CancellationToken cancellationToken) =>
+        group.MapPut("/{id:int}", async (int id, UpdateTaxRecordRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             var command = new UpdateTaxRecordCommand(id, request.PeriodType, request.StartDate, request.EndDate, request.Rate);
             var response = await sender.Send(command, cancellationToken);

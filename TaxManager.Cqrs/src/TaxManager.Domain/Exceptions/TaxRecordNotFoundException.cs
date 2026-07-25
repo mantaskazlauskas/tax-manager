@@ -1,4 +1,4 @@
 namespace TaxManager.Domain.Exceptions;
 
-public class TaxRecordNotFoundException(Guid taxRecordId)
+public class TaxRecordNotFoundException(int taxRecordId)
     : DomainException($"Tax record '{taxRecordId}' was not found.");

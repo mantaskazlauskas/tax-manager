@@ -4,7 +4,7 @@ namespace TaxManager.Application.Abstractions;
 
 public interface ITaxRecordRepository
 {
-    Task<TaxRecord?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<TaxRecord?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<TaxRecord>> GetByMunicipalityIdAsync(int municipalityId, CancellationToken cancellationToken);
 

@@ -7,7 +7,7 @@ namespace TaxManager.Infrastructure.Repositories;
 
 public class TaxRecordRepository(TaxManagerDbContext dbContext) : ITaxRecordRepository
 {
-    public Task<TaxRecord?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+    public Task<TaxRecord?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
         dbContext.TaxRecords.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<TaxRecord>> GetByMunicipalityIdAsync(int municipalityId, CancellationToken cancellationToken) =>

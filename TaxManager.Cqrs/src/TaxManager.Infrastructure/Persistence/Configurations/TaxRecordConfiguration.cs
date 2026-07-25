@@ -9,6 +9,7 @@ public class TaxRecordConfiguration : IEntityTypeConfiguration<TaxRecord>
     public void Configure(EntityTypeBuilder<TaxRecord> builder)
     {
         builder.HasKey(t => t.Id);
+        builder.Property(t => t.Id).ValueGeneratedOnAdd();
 
         builder.Property(t => t.PeriodType)
             .HasConversion<string>()

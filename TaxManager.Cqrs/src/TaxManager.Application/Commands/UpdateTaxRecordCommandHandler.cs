@@ -2,6 +2,7 @@ using MediatR;
 using TaxManager.Application.Abstractions;
 using TaxManager.Application.Common;
 using TaxManager.Application.Dtos;
+using TaxManager.Domain.Entities;
 using TaxManager.Domain.Exceptions;
 
 namespace TaxManager.Application.Commands;
@@ -13,6 +14,8 @@ public class UpdateTaxRecordCommandHandler(
 {
     public async Task<TaxRecordResponse> Handle(UpdateTaxRecordCommand request, CancellationToken cancellationToken)
     {
+        TaxRecord.EnsureValidRange(request.PeriodType, request.StartDate, request.EndDate);
+
         var taxRecord = await taxRecordRepository.GetByIdAsync(request.TaxRecordId, cancellationToken)
             ?? throw new TaxRecordNotFoundException(request.TaxRecordId);
 

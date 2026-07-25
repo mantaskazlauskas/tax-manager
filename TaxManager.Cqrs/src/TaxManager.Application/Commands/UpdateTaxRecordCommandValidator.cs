@@ -6,9 +6,7 @@ public class UpdateTaxRecordCommandValidator : AbstractValidator<UpdateTaxRecord
 {
     public UpdateTaxRecordCommandValidator()
     {
-        RuleFor(x => x.TaxRecordId).NotEmpty();
-        RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate)
-            .WithMessage("End date must not be before start date.");
+        RuleFor(x => x.TaxRecordId).GreaterThan(0);
         RuleFor(x => x.Rate).GreaterThanOrEqualTo(0).WithMessage("Rate must not be negative.");
     }
 }
