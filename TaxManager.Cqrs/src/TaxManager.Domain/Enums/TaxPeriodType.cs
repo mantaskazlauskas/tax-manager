@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TaxManager.Domain.Enums;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace TaxManager.Domain.Enums;
 /// the more specific period wins (Daily beats Weekly beats Monthly beats Yearly). See
 /// <see cref="TaxManager.Domain.Services.TaxRateResolver"/>.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TaxPeriodType
 {
     Yearly = 1,
