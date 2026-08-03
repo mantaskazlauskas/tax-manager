@@ -6,3 +6,5 @@ obj/
 !.vscode/launch.json
 !.vscode/tasks.json
 requirements.md
+CLAUDE.md
+.claude/
