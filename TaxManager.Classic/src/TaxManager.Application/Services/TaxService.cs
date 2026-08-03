@@ -1,5 +1,10 @@
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using TaxManager.Application.Abstractions;
+using TaxManager.Application.Caching;
 using TaxManager.Application.Dtos;
+using TaxManager.Application.Options;
 using TaxManager.Domain.Entities;
 using TaxManager.Domain.Exceptions;
 using TaxManager.Domain.Services;
@@ -9,7 +14,9 @@ namespace TaxManager.Application.Services;
 public class TaxService(
     IMunicipalityRepository municipalityRepository,
     ITaxRecordRepository taxRecordRepository,
-    IUnitOfWork unitOfWork) : ITaxService
+    IUnitOfWork unitOfWork,
+    IDistributedCache cache,
+    IOptions<CachingOptions> cachingOptions) : ITaxService
 {
     public async Task<TaxRecordResponse> AddTaxRecordAsync(CreateTaxRecordRequest request, CancellationToken cancellationToken)
     {
@@ -33,9 +40,10 @@ public class TaxService(
         var taxRecord = new TaxRecord(municipality.Id, request.PeriodType, request.StartDate, request.EndDate, request.Rate);
 
         municipality.AddTaxRecord(taxRecord);
-        
+
         await taxRecordRepository.AddAsync(taxRecord, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await cache.RemoveAsync(TaxRecordCacheKeys.BuildKey(municipality.Name), cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
@@ -55,6 +63,7 @@ public class TaxService(
 
         taxRecord.Update(request.PeriodType, request.StartDate, request.EndDate, request.Rate);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await cache.RemoveAsync(TaxRecordCacheKeys.BuildKey(municipality.Name), cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
@@ -64,11 +73,37 @@ public class TaxService(
         var municipality = await municipalityRepository.GetByNameAsync(municipalityName, cancellationToken)
             ?? throw new MunicipalityNotFoundException(municipalityName);
 
-        var records = await taxRecordRepository.GetByMunicipalityIdAsync(municipality.Id, cancellationToken);
+        var records = await GetCachedRecordsAsync(municipality, cancellationToken);
         var resolved = TaxRateResolver.Resolve(records, date)
             ?? throw new TaxRateNotFoundException(municipality.Name, date);
 
         return new TaxRateResponse(municipality.Name, date, resolved.Rate, resolved.PeriodType);
+    }
+
+    private async Task<IReadOnlyList<TaxRecord>> GetCachedRecordsAsync(Municipality municipality, CancellationToken cancellationToken)
+    {
+        var key = TaxRecordCacheKeys.BuildKey(municipality.Name);
+        var cached = await cache.GetStringAsync(key, cancellationToken);
+        if (cached is not null)
+        {
+            var cachedRecords = JsonSerializer.Deserialize<List<CachedTaxRecord>>(cached) ?? [];
+            return cachedRecords
+                .Select(r => new TaxRecord(r.MunicipalityId, r.PeriodType, r.StartDate, r.EndDate, r.Rate))
+                .ToList();
+        }
+
+        var records = await taxRecordRepository.GetByMunicipalityIdAsync(municipality.Id, cancellationToken);
+        var toCache = records.Select(r => new CachedTaxRecord(r.MunicipalityId, r.PeriodType, r.StartDate, r.EndDate, r.Rate));
+        await cache.SetStringAsync(
+            key,
+            JsonSerializer.Serialize(toCache),
+            new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(cachingOptions.Value.TaxRatesSlidingExpirationMinutes)
+            },
+            cancellationToken);
+
+        return records;
     }
 
     /// <summary>

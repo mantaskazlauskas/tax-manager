@@ -50,6 +50,24 @@ public class TaxRateApiTests(TaxManagerApiFactory factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetTaxRate_StopsReturningNotFound_AfterAMatchingRecordIsAddedForThatDate()
+    {
+        var client = factory.CreateClient();
+        var municipality = $"Vejle-{Guid.NewGuid():N}";
+        var date = new DateOnly(2024, 6, 1);
+
+        var beforeResponse = await client.GetAsync($"/api/municipalities/{municipality}/tax-rate?date={date:yyyy-MM-dd}");
+        Assert.Equal(HttpStatusCode.NotFound, beforeResponse.StatusCode);
+
+        var repeatResponse = await client.GetAsync($"/api/municipalities/{municipality}/tax-rate?date={date:yyyy-MM-dd}");
+        Assert.Equal(HttpStatusCode.NotFound, repeatResponse.StatusCode);
+
+        await CreateTaxRecordAsync(client, municipality, TaxPeriodType.Yearly, new DateOnly(2024, 1, 1), new DateOnly(2024, 12, 31), 0.2m);
+
+        await AssertTaxRateAsync(client, municipality, date, 0.2m);
+    }
+
     private static async Task CreateTaxRecordAsync(
         HttpClient client, string municipality, TaxPeriodType periodType, DateOnly start, DateOnly end, decimal rate)
     {
