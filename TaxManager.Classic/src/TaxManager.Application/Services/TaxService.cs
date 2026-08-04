@@ -1,5 +1,10 @@
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using TaxManager.Application.Abstractions;
+using TaxManager.Application.Caching;
 using TaxManager.Application.Dtos;
+using TaxManager.Application.Options;
 using TaxManager.Domain.Entities;
 using TaxManager.Domain.Exceptions;
 using TaxManager.Domain.Services;
@@ -9,7 +14,9 @@ namespace TaxManager.Application.Services;
 public class TaxService(
     IMunicipalityRepository municipalityRepository,
     ITaxRecordRepository taxRecordRepository,
-    IUnitOfWork unitOfWork) : ITaxService
+    IUnitOfWork unitOfWork,
+    IDistributedCache cache,
+    IOptions<CachingOptions> cachingOptions) : ITaxService
 {
     public async Task<TaxRecordResponse> AddTaxRecordAsync(CreateTaxRecordRequest request, CancellationToken cancellationToken)
     {
@@ -33,9 +40,10 @@ public class TaxService(
         var taxRecord = new TaxRecord(municipality.Id, request.PeriodType, request.StartDate, request.EndDate, request.Rate);
 
         municipality.AddTaxRecord(taxRecord);
-        
+
         await taxRecordRepository.AddAsync(taxRecord, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await BumpGenerationAsync(municipality.Name, cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
@@ -55,12 +63,30 @@ public class TaxService(
 
         taxRecord.Update(request.PeriodType, request.StartDate, request.EndDate, request.Rate);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await BumpGenerationAsync(municipality.Name, cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
 
     public async Task<TaxRateResponse> GetTaxRateAsync(string municipalityName, DateOnly date, CancellationToken cancellationToken)
     {
+        var scope = TaxRecordCacheKeys.NormalizeScope(municipalityName);
+        var generationKey = TaxRecordCacheKeys.GenerationKey(scope);
+        var generation = await cache.GetStringAsync(generationKey, cancellationToken);
+        if (generation is null)
+        {
+            generation = Guid.NewGuid().ToString("N");
+            await cache.SetStringAsync(generationKey, generation, cancellationToken);
+        }
+
+        var dataKey = TaxRecordCacheKeys.DataKey(scope, date.ToString("O"), generation);
+
+        var cached = await cache.GetStringAsync(dataKey, cancellationToken);
+        if (cached is not null)
+        {
+            return JsonSerializer.Deserialize<TaxRateResponse>(cached)!;
+        }
+
         var municipality = await municipalityRepository.GetByNameAsync(municipalityName, cancellationToken)
             ?? throw new MunicipalityNotFoundException(municipalityName);
 
@@ -68,8 +94,25 @@ public class TaxService(
         var resolved = TaxRateResolver.Resolve(records, date)
             ?? throw new TaxRateNotFoundException(municipality.Name, date);
 
-        return new TaxRateResponse(municipality.Name, date, resolved.Rate, resolved.PeriodType);
+        var response = new TaxRateResponse(municipality.Name, date, resolved.Rate, resolved.PeriodType);
+
+        await cache.SetStringAsync(
+            dataKey,
+            JsonSerializer.Serialize(response),
+            new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(cachingOptions.Value.TaxRatesSlidingExpirationMinutes)
+            },
+            cancellationToken);
+
+        return response;
     }
+
+    private async Task BumpGenerationAsync(string municipalityName, CancellationToken cancellationToken) =>
+        await cache.SetStringAsync(
+            TaxRecordCacheKeys.GenerationKey(TaxRecordCacheKeys.NormalizeScope(municipalityName)),
+            Guid.NewGuid().ToString("N"),
+            cancellationToken);
 
     /// <summary>
     /// Assumption: overlapping ranges of the *same* period type for the *same* municipality are

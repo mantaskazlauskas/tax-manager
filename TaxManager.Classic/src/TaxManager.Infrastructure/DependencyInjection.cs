@@ -25,6 +25,12 @@ public static class DependencyInjection
         services.AddScoped<IMunicipalityRepository, MunicipalityRepository>();
         services.AddScoped<ITaxRecordRepository, TaxRecordRepository>();
 
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis")
+                ?? throw new InvalidOperationException("Connection string 'Redis' is not configured.");
+        });
+
         return services;
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaxManager.Api.Endpoints;
 using TaxManager.Api.Middleware;
 using TaxManager.Application;
+using TaxManager.Application.Options;
 using TaxManager.Infrastructure;
 using TaxManager.Infrastructure.Persistence;
 
@@ -16,6 +17,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection("Caching"));
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
 using TaxManager.Application.Abstractions;
+using TaxManager.Application.Caching;
 using TaxManager.Application.Common;
 using TaxManager.Application.Dtos;
 using TaxManager.Domain.Entities;
@@ -9,7 +11,8 @@ namespace TaxManager.Application.Commands;
 public class AddTaxRecordCommandHandler(
     IMunicipalityRepository municipalityRepository,
     ITaxRecordRepository taxRecordRepository,
-    IUnitOfWork unitOfWork) : IRequestHandler<AddTaxRecordCommand, TaxRecordResponse>
+    IUnitOfWork unitOfWork,
+    IDistributedCache cache) : IRequestHandler<AddTaxRecordCommand, TaxRecordResponse>
 {
     public async Task<TaxRecordResponse> Handle(AddTaxRecordCommand request, CancellationToken cancellationToken)
     {
@@ -31,6 +34,11 @@ public class AddTaxRecordCommandHandler(
 
         await taxRecordRepository.AddAsync(taxRecord, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await cache.SetStringAsync(
+            TaxRecordCacheKeys.GenerationKey(TaxRecordCacheKeys.NormalizeScope(municipality.Name)),
+            Guid.NewGuid().ToString("N"),
+            cancellationToken);
 
         return new TaxRecordResponse(taxRecord.Id, municipality.Name, taxRecord.PeriodType, taxRecord.StartDate, taxRecord.EndDate, taxRecord.Rate);
     }
