@@ -43,7 +43,7 @@ public class TaxService(
 
         await taxRecordRepository.AddAsync(taxRecord, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        await cache.RemoveAsync(TaxRecordCacheKeys.BuildKey(municipality.Name), cancellationToken);
+        await BumpGenerationAsync(municipality.Name, cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
@@ -63,48 +63,56 @@ public class TaxService(
 
         taxRecord.Update(request.PeriodType, request.StartDate, request.EndDate, request.Rate);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        await cache.RemoveAsync(TaxRecordCacheKeys.BuildKey(municipality.Name), cancellationToken);
+        await BumpGenerationAsync(municipality.Name, cancellationToken);
 
         return ToResponse(taxRecord, municipality.Name);
     }
 
     public async Task<TaxRateResponse> GetTaxRateAsync(string municipalityName, DateOnly date, CancellationToken cancellationToken)
     {
+        var scope = TaxRecordCacheKeys.NormalizeScope(municipalityName);
+        var generationKey = TaxRecordCacheKeys.GenerationKey(scope);
+        var generation = await cache.GetStringAsync(generationKey, cancellationToken);
+        if (generation is null)
+        {
+            generation = Guid.NewGuid().ToString("N");
+            await cache.SetStringAsync(generationKey, generation, cancellationToken);
+        }
+
+        var dataKey = TaxRecordCacheKeys.DataKey(scope, date.ToString("O"), generation);
+
+        var cached = await cache.GetStringAsync(dataKey, cancellationToken);
+        if (cached is not null)
+        {
+            return JsonSerializer.Deserialize<TaxRateResponse>(cached)!;
+        }
+
         var municipality = await municipalityRepository.GetByNameAsync(municipalityName, cancellationToken)
             ?? throw new MunicipalityNotFoundException(municipalityName);
 
-        var records = await GetCachedRecordsAsync(municipality, cancellationToken);
+        var records = await taxRecordRepository.GetByMunicipalityIdAsync(municipality.Id, cancellationToken);
         var resolved = TaxRateResolver.Resolve(records, date)
             ?? throw new TaxRateNotFoundException(municipality.Name, date);
 
-        return new TaxRateResponse(municipality.Name, date, resolved.Rate, resolved.PeriodType);
-    }
+        var response = new TaxRateResponse(municipality.Name, date, resolved.Rate, resolved.PeriodType);
 
-    private async Task<IReadOnlyList<TaxRecord>> GetCachedRecordsAsync(Municipality municipality, CancellationToken cancellationToken)
-    {
-        var key = TaxRecordCacheKeys.BuildKey(municipality.Name);
-        var cached = await cache.GetStringAsync(key, cancellationToken);
-        if (cached is not null)
-        {
-            var cachedRecords = JsonSerializer.Deserialize<List<CachedTaxRecord>>(cached) ?? [];
-            return cachedRecords
-                .Select(r => new TaxRecord(r.MunicipalityId, r.PeriodType, r.StartDate, r.EndDate, r.Rate))
-                .ToList();
-        }
-
-        var records = await taxRecordRepository.GetByMunicipalityIdAsync(municipality.Id, cancellationToken);
-        var toCache = records.Select(r => new CachedTaxRecord(r.MunicipalityId, r.PeriodType, r.StartDate, r.EndDate, r.Rate));
         await cache.SetStringAsync(
-            key,
-            JsonSerializer.Serialize(toCache),
+            dataKey,
+            JsonSerializer.Serialize(response),
             new DistributedCacheEntryOptions
             {
                 SlidingExpiration = TimeSpan.FromMinutes(cachingOptions.Value.TaxRatesSlidingExpirationMinutes)
             },
             cancellationToken);
 
-        return records;
+        return response;
     }
+
+    private async Task BumpGenerationAsync(string municipalityName, CancellationToken cancellationToken) =>
+        await cache.SetStringAsync(
+            TaxRecordCacheKeys.GenerationKey(TaxRecordCacheKeys.NormalizeScope(municipalityName)),
+            Guid.NewGuid().ToString("N"),
+            cancellationToken);
 
     /// <summary>
     /// Assumption: overlapping ranges of the *same* period type for the *same* municipality are
